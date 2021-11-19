@@ -140,6 +140,30 @@ public class EventProgramPreProcessorTest
     }
 
     @Test
+    public void testNPE()
+    {
+        // Given
+        ProgramStage programStage = new ProgramStage();
+        programStage.setUid("LGSWs20XFvy");
+        when( preheat.get( ProgramStage.class, "LGSWs20XFvy" ) )
+                .thenReturn( programStage );
+        Event event = new Event();
+        event.setProgramStage( programStage.getUid() );
+        
+        TrackerBundle bundle = TrackerBundle.builder()
+            .events( Collections.singletonList( event ) )
+            .preheat( preheat )
+            .build();
+
+        // When
+        preProcessorToTest.process( bundle );
+
+        // Then
+//        verify( preheat ).put( TrackerIdentifier.UID, programStageWithoutRegistration() );
+//        assertEquals( "LGSWs20XFvy", bundle.getEvents().get( 0 ).getProgram() );
+    }
+
+    @Test
     public void testProgramEventIsEnhancedWithProgramStage()
     {
         // Given

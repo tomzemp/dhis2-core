@@ -208,7 +208,7 @@
         <testcontainers.version>1.15.1</testcontainers.version>
         <objenesis.version>3.2</objenesis.version>
         <jsonassert.version>1.5.0</jsonassert.version>
-        <awaitility.version>4.0.2</awaitility.version>
+        <awaitility.version>4.1.1</awaitility.version>
         <random-beans.version>3.7.0</random-beans.version>
         <tree.version>0.2.5</tree.version>
         <h2.version>1.4.200</h2.version>

@@ -1277,8 +1277,9 @@ function dataSetSelected()
 
     dhis2.de.currentDataSetId = $( '#selectedDataSetId' ).val();
     
+    var serverTimeDelta = dhis2.de.storageManager.getServerTimeDelta();
     dhis2.de.blackListedPeriods = dhis2.de.dataSets[dhis2.de.currentDataSetId].dataInputPeriods
-        .filter(function(dip) { return ( dip.openingDate != "" && new Date( dip.openingDate ) > Date.now() ) || ( dip.closingDate != "" && new Date( dip.closingDate ) < Date.now() ); })
+        .filter(function(dip) { return ( dip.openingDate != "" && new Date( dip.openingDate ) > (Date.now() + serverTimeDelta) ) || ( dip.closingDate != "" && new Date( dip.closingDate ) < (Date.now() + serverTimeDelta) ); })
         .map(function(dip) { return dip.period.isoPeriod; });
     
     if ( dhis2.de.currentDataSetId && dhis2.de.currentDataSetId !== -1 )
@@ -2658,6 +2659,7 @@ function updateForms()
         .then(purgeLocalForms)
         .then(getLocalFormsToUpdate)
         .then(downloadForms)
+        .then(getTimeDelta)
         .then(getUserSetting)
         .then(getRemoteFormsToDownload)
         .then(downloadForms)
@@ -2828,6 +2830,7 @@ function StorageManager()
     var KEY_DATAVALUES = 'datavalues';
     var KEY_COMPLETEDATASETS = 'completedatasets';
     var KEY_USER_SETTINGS = 'usersettings';
+    var KEY_SERVER_TIME_DELTA = 'servertimedelta';
 
     /**
      * Gets the content of a data entry form.
@@ -3338,6 +3341,25 @@ function StorageManager()
     }
 
     /**
+     * Returns the cached server time delta
+     */
+    this.getServerTimeDelta = function()
+    {
+        return localStorage[ KEY_SERVER_TIME_DELTA ] !== null
+            ? localStorage[ KEY_SERVER_TIME_DELTA ]
+            : 0;
+    }
+
+    /**
+     * Caches the time difference between server time and browser time
+     * @param timeDelta The time difference (server - client) in milliseconds (integer)
+     */
+    this.setServerTimeDelta = function(timeDelta)
+    {
+        localStorage[ KEY_SERVER_TIME_DELTA ] = timeDelta;
+    }
+
+    /**
      * Indicates whether there exists data values or complete data set
      * registrations in the local storage.
      *
@@ -3800,6 +3822,28 @@ function getUserSetting()
     $.getJSON(url, function( data ) {
             console.log("User settings loaded: ", data);
             dhis2.de.storageManager.setUserSettings(data);
+            def.resolve();
+        }
+    );
+
+    return def;
+}
+
+function getTimeDelta()
+{
+    if (dhis.d2.isOffline && localStorage[ KEY_SERVER_TIME_DELTA ]) {
+        return;
+    }
+
+    var def = $.Deferred();
+
+    var url = '../api/system/info';
+
+    //Gets the user setting for whether it should display short names for org units or not.
+    $.getJSON(url, function( data ) {
+            serverTimeDelta = new Date(data.serverDate) - new Date();
+            console.log("Server date delta loaded: ", serverTimeDelta);
+            dhis2.de.storageManager.setServerTimeDelta(serverTimeDelta);
             def.resolve();
         }
     );
